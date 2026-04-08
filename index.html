@@ -404,6 +404,27 @@
     }
     .ky-input:first-child { border-right: 1px solid #e5e5ea; }
     .ky-input::placeholder { color: #c7c7cc; }
+    .ky-check-row {
+      display: flex;
+      align-items: center;
+      padding: 10px 16px;
+      border-bottom: 1px solid #f2f2f7;
+      gap: 10px;
+      cursor: pointer;
+    }
+    .ky-check-row:last-child { border-bottom: none; }
+    .ky-check-row input[type="checkbox"] {
+      width: 20px; height: 20px;
+      accent-color: #007aff;
+      flex-shrink: 0;
+      cursor: pointer;
+    }
+    .ky-check-row label {
+      font-size: 14px;
+      color: #1c1c1e;
+      cursor: pointer;
+      line-height: 1.4;
+    }
   </style>
 </head>
 <body>
@@ -499,6 +520,12 @@
       <input type="text" id="hazard4" class="ky-input" placeholder="危険④" inputmode="text">
       <input type="text" id="counter4" class="ky-input" placeholder="対策④" inputmode="text">
     </div>
+    <div class="card-header" style="margin-top:0;">安全確認チェック</div>
+    <label class="ky-check-row"><input type="checkbox" id="chk1"><label for="chk1">現地の安全確認は実施したか</label></label>
+    <label class="ky-check-row"><input type="checkbox" id="chk2"><label for="chk2">体調不良者はいないか（無し・対処済）</label></label>
+    <label class="ky-check-row"><input type="checkbox" id="chk3"><label for="chk3">服装・装備は万全か</label></label>
+    <label class="ky-check-row"><input type="checkbox" id="chk4"><label for="chk4">天候や視界に問題はないか（無し・対処済）</label></label>
+    <label class="ky-check-row"><input type="checkbox" id="chk5"><label for="chk5">事前の予定と異なった要素はないか（無し・対処済）</label></label>
   </div>
 
   <div class="action-area">
@@ -1011,9 +1038,10 @@
     for (let c = 3; c <= 8; c++) { ws.getCell(8,c).fill = fillWhite; ws.getCell(8,c).border = { top: T, bottom: T, right: c===8 ? M : T }; }
 
     // Rows 9-10: チェックリスト
+    const chks = (data.kyChecks || [false,false,false,false,false]).map(v => v ? '☑' : '□');
     const chk = [
-      '□ 現地の安全確認は実施したか　　□ 体調不良者はいないか(無し・対処済)　　□ 服装・装備は万全か',
-      '□ 天候や視界に問題はないか(無し・対処済)　　□ 事前の予定と異なった要素はないか(無し・対処済)'
+      `${chks[0]} 現地の安全確認は実施したか　　${chks[1]} 体調不良者はいないか(無し・対処済)　　${chks[2]} 服装・装備は万全か`,
+      `${chks[3]} 天候や視界に問題はないか(無し・対処済)　　${chks[4]} 事前の予定と異なった要素はないか(無し・対処済)`
     ];
     for (let i = 0; i < 2; i++) {
       const r = 9 + i;
@@ -1196,7 +1224,8 @@
       company:     localStorage.getItem('companyName') || '',
       safetyGoal:  document.getElementById('safetyGoal').value.trim(),
       kyHazards:   [1,2,3,4].map(i => document.getElementById(`hazard${i}`).value.trim()),
-      kyCounters:  [1,2,3,4].map(i => document.getElementById(`counter${i}`).value.trim())
+      kyCounters:  [1,2,3,4].map(i => document.getElementById(`counter${i}`).value.trim()),
+      kyChecks:    [1,2,3,4,5].map(i => document.getElementById(`chk${i}`).checked)
     };
   }
 
@@ -1214,6 +1243,7 @@
       document.getElementById(`hazard${i}`).value  = '';
       document.getElementById(`counter${i}`).value = '';
     });
+    [1,2,3,4,5].forEach(i => { document.getElementById(`chk${i}`).checked = false; });
     document.getElementById('workerList').innerHTML = '';
     workerCount = 0;
     addWorker();
