@@ -373,6 +373,37 @@
     .toast.show { transform: translateX(-50%) translateY(0); }
     .toast.success { background: rgba(52,199,89,0.9); }
     .toast.error { background: rgba(255,59,48,0.9); }
+
+    /* KY活動 */
+    .ky-pair-header {
+      display: flex;
+      padding: 8px 16px;
+      background: #f0f0f0;
+      border-bottom: 1px solid #e5e5ea;
+      font-size: 12px;
+      font-weight: 600;
+      color: #6c6c6e;
+      text-align: center;
+    }
+    .ky-pair-header span { flex: 1; }
+    .ky-pair-row {
+      display: flex;
+      border-bottom: 1px solid #f2f2f7;
+      min-height: 48px;
+    }
+    .ky-pair-row:last-child { border-bottom: none; }
+    .ky-input {
+      flex: 1;
+      border: none;
+      outline: none;
+      padding: 12px 16px;
+      font-size: 15px;
+      font-family: inherit;
+      color: #1c1c1e;
+      background: transparent;
+    }
+    .ky-input:first-child { border-right: 1px solid #e5e5ea; }
+    .ky-input::placeholder { color: #c7c7cc; }
   </style>
 </head>
 <body>
@@ -404,6 +435,10 @@
     <div class="field-row">
       <span class="field-label">現場名</span>
       <input type="text" id="siteName" class="field-input" placeholder="例：〇〇ビル" inputmode="text">
+    </div>
+    <div class="field-row">
+      <span class="field-label">天候</span>
+      <input type="text" id="weather" class="field-input" placeholder="例：晴れ" inputmode="text">
     </div>
   </div>
 
@@ -438,12 +473,40 @@
     </div>
   </div>
 
+  <div class="card">
+    <div class="card-header">KY活動（危険予知）</div>
+    <div class="field-row">
+      <span class="field-label">本日の安全目標</span>
+      <input type="text" id="safetyGoal" class="field-input" placeholder="例：足元注意・声掛け確認" inputmode="text">
+    </div>
+    <div class="ky-pair-header">
+      <span>危険のポイント</span>
+      <span>私達はこうする</span>
+    </div>
+    <div class="ky-pair-row">
+      <input type="text" id="hazard1" class="ky-input" placeholder="危険①" inputmode="text">
+      <input type="text" id="counter1" class="ky-input" placeholder="対策①" inputmode="text">
+    </div>
+    <div class="ky-pair-row">
+      <input type="text" id="hazard2" class="ky-input" placeholder="危険②" inputmode="text">
+      <input type="text" id="counter2" class="ky-input" placeholder="対策②" inputmode="text">
+    </div>
+    <div class="ky-pair-row">
+      <input type="text" id="hazard3" class="ky-input" placeholder="危険③" inputmode="text">
+      <input type="text" id="counter3" class="ky-input" placeholder="対策③" inputmode="text">
+    </div>
+    <div class="ky-pair-row">
+      <input type="text" id="hazard4" class="ky-input" placeholder="危険④" inputmode="text">
+      <input type="text" id="counter4" class="ky-input" placeholder="対策④" inputmode="text">
+    </div>
+  </div>
+
   <div class="action-area">
     <button class="btn-excel" id="excelBtn" onclick="exportExcel()">
       📊 Excelで出力
     </button>
     <button class="btn-dropbox" id="dropboxBtn" onclick="uploadToDropbox()">
-      📦 Dropboxに保存
+      📦 Dropboxに保存（作業報告書＋KY）
     </button>
     <button class="btn-clear" onclick="clearForm()">
       フォームをリセット
@@ -845,6 +908,149 @@
     });
   }
 
+  // ===== KYシート Excel生成 =====
+  async function generateKYBlob(data) {
+    const wb = new ExcelJS.Workbook();
+    const ws = wb.addWorksheet('KYシート');
+
+    ws.getColumn(1).width = 12;
+    for (let c = 2; c <= 7; c++) ws.getColumn(c).width = 14;
+    ws.getColumn(8).width = 12;
+
+    ws.getRow(1).height = 36;
+    ws.getRow(2).height = 30;
+    ws.getRow(3).height = 24;
+    for (let r = 4; r <= 7; r++) ws.getRow(r).height = 36;
+    ws.getRow(8).height = 30;
+    ws.getRow(9).height = 22;
+    ws.getRow(10).height = 22;
+    ws.getRow(11).height = 30;
+    ws.getRow(12).height = 30;
+
+    const Ftitle  = { name: 'メイリオ', size: 14, bold: true };
+    const Fheader = { name: 'メイリオ', size: 10, bold: true, color: { argb: 'FFFFFFFF' } };
+    const Flabel  = { name: 'メイリオ', size: 10, bold: true, color: { argb: 'FF333333' } };
+    const Fval    = { name: 'メイリオ', size: 10, color: { argb: 'FF1a1a1a' } };
+    const Fcheck  = { name: 'メイリオ', size: 8,  color: { argb: 'FF333333' } };
+
+    const CC  = { horizontal: 'center', vertical: 'middle' };
+    const CL  = { horizontal: 'left',   vertical: 'middle', wrapText: true };
+
+    const T  = { style: 'thin',   color: { argb: 'FFb0b0b0' } };
+    const TK = { style: 'thin',   color: { argb: 'FF888888' } };
+    const M  = { style: 'medium', color: { argb: 'FF555555' } };
+
+    const fillTitle  = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF4a4a4a' } };
+    const fillLabel  = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFf0f0f0' } };
+    const fillWhite  = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFFFFF' } };
+    const fillCheck  = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFf8f8f8' } };
+
+    const d = data.workDate ? new Date(data.workDate + 'T00:00:00') : new Date();
+    const days = ['日','月','火','水','木','金','土'];
+    const dateStr = `${d.getMonth()+1}月${d.getDate()}日（${days[d.getDay()]}曜）　天候：${data.weather || ''}`;
+
+    // Row 1: タイトル + 日付
+    ws.mergeCells(1, 1, 1, 5);
+    const tC = ws.getCell(1, 1);
+    tC.value = '危険予知活動表'; tC.font = Ftitle; tC.alignment = { horizontal: 'left', vertical: 'middle' };
+    tC.fill = fillWhite; tC.border = { top: M, bottom: T, left: M };
+    for (let c = 2; c <= 5; c++) { ws.getCell(1,c).fill = fillWhite; ws.getCell(1,c).border = { top: M, bottom: T }; }
+    ws.mergeCells(1, 6, 1, 8);
+    const dtC = ws.getCell(1, 6);
+    dtC.value = dateStr; dtC.font = Fval; dtC.alignment = { horizontal: 'right', vertical: 'middle' };
+    dtC.fill = fillWhite; dtC.border = { top: M, bottom: T, right: M };
+    for (let c = 7; c <= 8; c++) { ws.getCell(1,c).fill = fillWhite; ws.getCell(1,c).border = { top: M, bottom: T, right: c===8 ? M : undefined }; }
+
+    // Row 2: 作業内容
+    const cLbl = ws.getCell(2, 1);
+    cLbl.value = '作業内容'; cLbl.font = Flabel; cLbl.alignment = CC;
+    cLbl.fill = fillLabel; cLbl.border = { top: T, bottom: T, left: M, right: TK };
+    ws.mergeCells(2, 2, 2, 8);
+    const cVal = ws.getCell(2, 2);
+    cVal.value = data.siteName || ''; cVal.font = Fval; cVal.alignment = CL;
+    cVal.fill = fillWhite; cVal.border = { top: T, bottom: T, left: TK, right: M };
+    for (let c = 3; c <= 8; c++) { ws.getCell(2,c).fill = fillWhite; ws.getCell(2,c).border = { top: T, bottom: T, right: c===8 ? M : T }; }
+
+    // Row 3: ヘッダー
+    ws.mergeCells(3, 1, 3, 4);
+    const h1 = ws.getCell(3, 1);
+    h1.value = '危険のポイント'; h1.font = Fheader; h1.alignment = CC; h1.fill = fillTitle;
+    h1.border = { top: T, bottom: T, left: M, right: TK };
+    for (let c = 2; c <= 4; c++) { ws.getCell(3,c).fill = fillTitle; ws.getCell(3,c).border = { top: T, bottom: T, right: c===4 ? TK : T }; }
+    ws.mergeCells(3, 5, 3, 8);
+    const h2 = ws.getCell(3, 5);
+    h2.value = '私達はこうする'; h2.font = Fheader; h2.alignment = CC; h2.fill = fillTitle;
+    h2.border = { top: T, bottom: T, left: TK, right: M };
+    for (let c = 6; c <= 8; c++) { ws.getCell(3,c).fill = fillTitle; ws.getCell(3,c).border = { top: T, bottom: T, right: c===8 ? M : T }; }
+
+    // Rows 4-7: 危険/対策
+    const hazards  = data.kyHazards  || ['','','',''];
+    const counters = data.kyCounters || ['','','',''];
+    for (let i = 0; i < 4; i++) {
+      const r = 4 + i;
+      ws.mergeCells(r, 1, r, 4);
+      const hC = ws.getCell(r, 1);
+      hC.value = hazards[i]; hC.font = Fval; hC.alignment = CL; hC.fill = fillWhite;
+      hC.border = { top: T, bottom: T, left: M, right: TK };
+      for (let c = 2; c <= 4; c++) { ws.getCell(r,c).fill = fillWhite; ws.getCell(r,c).border = { top: T, bottom: T, right: c===4 ? TK : T }; }
+      ws.mergeCells(r, 5, r, 8);
+      const cC = ws.getCell(r, 5);
+      cC.value = counters[i]; cC.font = Fval; cC.alignment = CL; cC.fill = fillWhite;
+      cC.border = { top: T, bottom: T, left: TK, right: M };
+      for (let c = 6; c <= 8; c++) { ws.getCell(r,c).fill = fillWhite; ws.getCell(r,c).border = { top: T, bottom: T, right: c===8 ? M : T }; }
+    }
+
+    // Row 8: 本日の安全目標
+    const gLbl = ws.getCell(8, 1);
+    gLbl.value = '本日の安全目標'; gLbl.font = Flabel; gLbl.alignment = CC;
+    gLbl.fill = fillLabel; gLbl.border = { top: T, bottom: T, left: M, right: TK };
+    ws.mergeCells(8, 2, 8, 8);
+    const gVal = ws.getCell(8, 2);
+    gVal.value = data.safetyGoal || ''; gVal.font = Fval; gVal.alignment = CL;
+    gVal.fill = fillWhite; gVal.border = { top: T, bottom: T, left: TK, right: M };
+    for (let c = 3; c <= 8; c++) { ws.getCell(8,c).fill = fillWhite; ws.getCell(8,c).border = { top: T, bottom: T, right: c===8 ? M : T }; }
+
+    // Rows 9-10: チェックリスト
+    const chk = [
+      '□ 現地の安全確認は実施したか　　□ 体調不良者はいないか(無し・対処済)　　□ 服装・装備は万全か',
+      '□ 天候や視界に問題はないか(無し・対処済)　　□ 事前の予定と異なった要素はないか(無し・対処済)'
+    ];
+    for (let i = 0; i < 2; i++) {
+      const r = 9 + i;
+      ws.mergeCells(r, 1, r, 8);
+      const ck = ws.getCell(r, 1);
+      ck.value = chk[i]; ck.font = Fcheck; ck.alignment = { horizontal: 'left', vertical: 'middle' };
+      ck.fill = fillCheck; ck.border = { top: T, bottom: T, left: M, right: M };
+      for (let c = 2; c <= 8; c++) { ws.getCell(r,c).fill = fillCheck; ws.getCell(r,c).border = { top: T, bottom: T, right: c===8 ? M : T }; }
+    }
+
+    // Rows 11-12: 参加者/サイン
+    ws.mergeCells(11, 1, 12, 1);
+    const pLbl = ws.getCell(11, 1);
+    pLbl.value = '参加者\nサイン'; pLbl.font = Flabel; pLbl.alignment = CC;
+    pLbl.fill = fillLabel; pLbl.border = { top: T, bottom: M, left: M, right: TK };
+    const workers = data.workers || [];
+    for (let i = 0; i < 6; i++) {
+      const c = i + 2;
+      ws.getCell(11, c).value = workers[i] || ''; ws.getCell(11, c).font = Fval;
+      ws.getCell(11, c).alignment = CC; ws.getCell(11, c).fill = fillWhite;
+      ws.getCell(11, c).border = { top: T, bottom: TK, left: c===2 ? TK : T, right: T };
+      ws.getCell(12, c).fill = fillWhite;
+      ws.getCell(12, c).border = { top: TK, bottom: M, left: c===2 ? TK : T, right: T };
+    }
+    ws.mergeCells(11, 8, 12, 8);
+    const cntC = ws.getCell(11, 8);
+    cntC.value = `作業人数\n${workers.length}名`; cntC.font = Flabel; cntC.alignment = CC;
+    cntC.fill = fillLabel; cntC.border = { top: T, bottom: M, left: T, right: M };
+
+    ws.pageSetup.paperSize = 9; ws.pageSetup.orientation = 'portrait';
+    ws.pageSetup.scale = 100; ws.pageSetup.printArea = 'A1:H12';
+    ws.pageSetup.horizontalCentered = true;
+
+    const buffer = await wb.xlsx.writeBuffer();
+    return new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+  }
+
   // ===== Excel出力 =====
   async function exportExcel() {
     const data = getFormData();
@@ -855,17 +1061,16 @@
     btn.disabled = true;
     btn.textContent = '⏳ 生成中...';
     try {
-      const blob     = await generateExcelBlob(data);
-      const dateStr  = data.workDate.replace(/-/g, '');
-      const siteStr  = (data.siteName || '現場').replace(/[\/\\:*?"<>|]/g, '_');
-      const filename = `${dateStr}_${siteStr}.xlsx`;
-      const url      = URL.createObjectURL(blob);
-      const a        = document.createElement('a');
-      a.href         = url;
-      a.download     = filename;
-      a.click();
-      URL.revokeObjectURL(url);
-      showToast('Excelを出力しました', 'success');
+      const dateStr = data.workDate.replace(/-/g, '');
+      const siteStr = (data.siteName || '現場').replace(/[\/\\:*?"<>|]/g, '_');
+      const [blob, kyBlob] = await Promise.all([generateExcelBlob(data), generateKYBlob(data)]);
+      for (const [b, name] of [[blob, `${dateStr}_${siteStr}.xlsx`], [kyBlob, `KY_${dateStr}_${siteStr}.xlsx`]]) {
+        const url = URL.createObjectURL(b);
+        const a   = document.createElement('a');
+        a.href = url; a.download = name; a.click();
+        URL.revokeObjectURL(url);
+      }
+      showToast('2ファイルを出力しました', 'success');
     } catch(e) {
       console.error(e);
       showToast('Excelの生成に失敗しました', 'error');
@@ -892,46 +1097,46 @@
     btn.textContent = '⏳ アップロード中...';
 
     try {
-      const blob    = await generateExcelBlob(data);
       const dateStr = data.workDate.replace(/-/g, '');
       const siteStr = (data.siteName || '現場').replace(/[\/\\:*?"<>|]/g, '_');
-      const filename = `${dateStr}_${siteStr}.xlsx`;
-
       const folder      = (localStorage.getItem('dropboxFolder') || '/日報').replace(/\/$/, '');
       const d           = new Date(data.workDate + 'T00:00:00');
       const monthFolder = `${d.getFullYear()}年${d.getMonth() + 1}月`;
-      const dropboxPath = `${folder}/${monthFolder}/${filename}`;
-
       const rootNs = localStorage.getItem('dropboxRootNs');
-      const uploadHeaders = {
-        'Authorization': `Bearer ${token}`,
-        'Dropbox-API-Arg': JSON.stringify({
-          path: dropboxPath, mode: 'overwrite', autorename: true, mute: false
-        }).replace(/[^\x00-\x7F]/g, c => '\\u' + c.charCodeAt(0).toString(16).padStart(4,'0')),
-        'Content-Type': 'application/octet-stream'
-      };
-      if (rootNs) {
-        uploadHeaders['Dropbox-API-Path-Root'] = JSON.stringify({'.tag': 'root', 'root': rootNs})
-          .replace(/[^\x00-\x7F]/g, c => '\\u' + c.charCodeAt(0).toString(16).padStart(4,'0'));
+
+      const [blob, kyBlob] = await Promise.all([generateExcelBlob(data), generateKYBlob(data)]);
+
+      async function uploadFile(fileBlob, filename) {
+        const path = `${folder}/${monthFolder}/${filename}`;
+        const headers = {
+          'Authorization': `Bearer ${token}`,
+          'Dropbox-API-Arg': JSON.stringify({ path, mode: 'overwrite', autorename: true, mute: false })
+            .replace(/[^\x00-\x7F]/g, c => '\\u' + c.charCodeAt(0).toString(16).padStart(4,'0')),
+          'Content-Type': 'application/octet-stream'
+        };
+        if (rootNs) {
+          headers['Dropbox-API-Path-Root'] = JSON.stringify({'.tag': 'root', 'root': rootNs})
+            .replace(/[^\x00-\x7F]/g, c => '\\u' + c.charCodeAt(0).toString(16).padStart(4,'0'));
+        }
+        return fetch('https://content.dropboxapi.com/2/files/upload', { method: 'POST', headers, body: fileBlob });
       }
 
-      const response = await fetch('https://content.dropboxapi.com/2/files/upload', {
-        method: 'POST',
-        headers: uploadHeaders,
-        body: blob
-      });
+      const [res1, res2] = await Promise.all([
+        uploadFile(blob,   `${dateStr}_${siteStr}.xlsx`),
+        uploadFile(kyBlob, `KY_${dateStr}_${siteStr}.xlsx`)
+      ]);
 
-      if (response.ok) {
-        const result = await response.json();
-        showToast(`保存しました\n${result.name}`, 'success');
+      if (res1.ok && res2.ok) {
+        showToast('2ファイルをDropboxに保存しました', 'success');
       } else {
-        const err = await response.json();
+        const failedRes = !res1.ok ? res1 : res2;
+        const err = await failedRes.json();
         console.error(err);
-        if (response.status === 401) {
+        if (failedRes.status === 401) {
           showToast('トークン切れ。設定から再接続してください', 'error');
           openSettings();
         } else {
-          showToast(`エラー: ${err.error_summary || response.status}`, 'error');
+          showToast(`エラー: ${err.error_summary || failedRes.status}`, 'error');
         }
       }
     } catch(e) {
@@ -939,7 +1144,7 @@
       showToast('アップロードに失敗しました', 'error');
     } finally {
       btn.disabled = false;
-      btn.innerHTML = '📦 Dropboxに保存';
+      btn.innerHTML = '📦 Dropboxに保存（作業報告書＋KY）';
     }
   }
 
@@ -984,10 +1189,14 @@
       startTime:   document.getElementById('startTime').value,
       endTime:     document.getElementById('endTime').value,
       siteName:    document.getElementById('siteName').value.trim(),
+      weather:     document.getElementById('weather').value.trim(),
       workContent: document.getElementById('workContent').value.trim(),
       remarks:     document.getElementById('remarks').value.trim(),
       workers:     getWorkerNames(),
-      company:     localStorage.getItem('companyName') || ''
+      company:     localStorage.getItem('companyName') || '',
+      safetyGoal:  document.getElementById('safetyGoal').value.trim(),
+      kyHazards:   [1,2,3,4].map(i => document.getElementById(`hazard${i}`).value.trim()),
+      kyCounters:  [1,2,3,4].map(i => document.getElementById(`counter${i}`).value.trim())
     };
   }
 
@@ -997,8 +1206,14 @@
     document.getElementById('startTime').value    = '';
     document.getElementById('endTime').value      = '';
     document.getElementById('siteName').value     = '';
+    document.getElementById('weather').value      = '';
     document.getElementById('workContent').value  = '';
     document.getElementById('remarks').value      = '';
+    document.getElementById('safetyGoal').value   = '';
+    [1,2,3,4].forEach(i => {
+      document.getElementById(`hazard${i}`).value  = '';
+      document.getElementById(`counter${i}`).value = '';
+    });
     document.getElementById('workerList').innerHTML = '';
     workerCount = 0;
     addWorker();
